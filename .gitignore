@@ -1,0 +1,30 @@
+.env
+.env.development.local
+.env.test.local
+.env.production.local
+.env.local
+
+*/package-lock.json
+*/node_modules
+
+.DS_Store
+.vscode
+
+# compiled output
+backend/dist
+backend/node_modules
+backend/build
+
+# vercel
+frontend/.vercel
+
+# typescript
+frontend/*.tsbuildinfo
+frontend/next-env.d.ts
+
+# next.js
+frontend/.next/
+frontend/out/
+
+# production
+frontend/build
