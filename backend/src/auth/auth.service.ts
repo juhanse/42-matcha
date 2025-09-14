@@ -5,10 +5,11 @@ import { compare, hash } from 'bcrypt';
 import { UserPayload } from './jwt.strategy';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { PG_POOL } from 'src/db/db.module';
 
 @Injectable()
 export class AuthService {
-	constructor(@Inject('PG_POOL') private pool: Pool, private readonly jwtService: JwtService) {}
+	constructor(@Inject(PG_POOL) private readonly pool: Pool, private readonly jwtService: JwtService) {}
 
 	async login({ username, password }: LoginDto) {
 		const query = 'SELECT * FROM users WHERE username = $1';
