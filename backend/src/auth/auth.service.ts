@@ -1,20 +1,18 @@
 import { Injectable, Inject, HttpException, HttpStatus } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Pool } from 'pg';
-import { AuthLogin } from './auth.controller';
 import { compare, hash } from 'bcrypt';
 import { UserPayload } from './jwt.strategy';
-import { CreateUserDto } from 'src/users/dto/create-user.dto';
+import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
 
 @Injectable()
 export class AuthService {
 	constructor(@Inject('PG_POOL') private pool: Pool, private readonly jwtService: JwtService) {}
 
-	async login({ authlogin }: { authlogin: AuthLogin }) {
-		const { email, password } = authlogin;
-
-		const query = 'SELECT id, username, email FROM users WHERE id = $1';
-		const result = await this.pool.query(query, [email]);
+	async login({ username, password }: LoginDto) {
+		const query = 'SELECT * FROM users WHERE username = $1';
+		const result = await this.pool.query(query, [username]);
 
 		if (!result.rows[0]) {
 			throw new HttpException('User not found', HttpStatus.NOT_FOUND);
@@ -28,10 +26,8 @@ export class AuthService {
 		return this.authenticateUser({ id: result.rows[0].id });
 	}
 
-	async register({ authregister }: { authregister: CreateUserDto }) {
-		const { username, email, password } = authregister;
-
-		const searchQuery = 'SELECT id, username, email FROM users WHERE username = $1 OR email = $2';
+	async register({ email, username, lastname, firstname, password }: RegisterDto) {
+		const searchQuery = 'SELECT * FROM users WHERE username = $1 OR email = $2';
 		const existingUser = await this.pool.query(searchQuery, [username, email]);
 
 		if (existingUser.rows[0]) {
@@ -41,11 +37,11 @@ export class AuthService {
 		const hashedPassword = await this.hashPassword({ password });
 
 		const createQuery = `
-			INSERT INTO users (username, email, password)
-			VALUES ($1, $2, $3)
+			INSERT INTO users (email, username, lastname, firstname, password)
+			VALUES ($1, $2, $3, $4, $5)
 			RETURNING id, username, email
 		`;
-		const user = await this.pool.query(createQuery, [username, email, hashedPassword]);
+		const user = await this.pool.query(createQuery, [email, username, lastname, firstname, hashedPassword]);
 
 		if (!user.rows[0]) {
 			throw new HttpException('Failed creating user', HttpStatus.INTERNAL_SERVER_ERROR);
