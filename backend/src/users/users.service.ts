@@ -27,15 +27,25 @@ export class UsersService {
 			dataToUpdate.password_hash = hashedPassword;
 		}
 
-		const isExist = await this.pool.query('SELECT id FROM users WHERE id = $1', [id]);
-		if (!isExist.rows[0]) {
+		const { rows } = await this.pool.query('SELECT * FROM users WHERE id = $1', [id]);
+		if (!rows[0]) {
 			throw new HttpException('User not found', HttpStatus.NOT_FOUND);
 		}
 
-		dataToUpdate.updated_at = new Date();
-	
-		const query = `UPDATE users SET email = $1, name = $2, updated_at = NOW() WHERE id = $3 RETURNING id, email, name, created_at, updated_at`;
-		const values = [dataToUpdate.email, dataToUpdate.name, id];
+		const user = rows[0];
+		const updatedAt = new Date();
+
+		const values = [
+			dataToUpdate.email ?? user.email,
+			dataToUpdate.username ?? user.username,
+			dataToUpdate.lastname ?? user.lastname,
+			dataToUpdate.firstname ?? user.firstname,
+			dataToUpdate.password_hash ?? user.password,
+			updatedAt,
+			id
+		];
+
+		const query = `UPDATE users SET email = $1, username = $2, lastname = $3, firstname = $4, password = $5, updated_at = $6 WHERE id = $7 RETURNING *`;
 		const result = await this.pool.query(query, values);
 
 		return result.rows[0];
